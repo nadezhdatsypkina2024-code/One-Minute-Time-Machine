@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Minute Time Machine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #111;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 1.5rem;
+  }
+
+  /* THE BOX */
+  .machine-box {
+    width: min(500px, 96vw);
+    background: #0a0a0a;
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 2px #2a2a2a,
+      0 0 0 4px #111,
+      0 20px 60px rgba(0,0,0,0.9),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* BOTTOM PANEL - buttons area */
+  .top-panel {
+    background: #0f0f0f;
+    padding: 1.2rem 2rem 1.4rem;
+    border-top: 3px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    position: relative;
+  }
+
+  .top-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.01) 2px,
+      rgba(255,255,255,0.01) 4px
+    );
+  }
+
+  /* BLUE SIDE BUTTONS */
+  .side-btn {
+    width: 36px;
+    height: 28px;
+    background: linear-gradient(180deg, #4a9eff, #1a6ecc);
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+      0 4px 0 #0a3d7a,
+      0 5px 8px rgba(0,0,0,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: all 0.1s;
+    position: relative;
+  }
+
+  .side-btn::after {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+  }
+
+  .side-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #0a3d7a, 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* RED MAIN BUTTON */
+  .red-btn-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .red-btn {
+    width: 72px;
+    height: 52px;
+    background: linear-gradient(180deg, #ff4444, #cc1111);
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+      0 6px 0 #7a0000,
+      0 8px 16px rgba(200,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: all 0.1s;
+    position: relative;
+    animation: redGlow 2s ease-in-out infinite;
+  }
+
+  .red-btn::after {
+    content: '';
+    position: absolute;
+    top: 6px; left: 8px; right: 8px;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+  }
+
+  .red-btn:hover {
+    background: linear-gradient(180deg, #ff6666, #dd2222);
+  }
+
+  .red-btn.pressed {
+    transform: translateY(5px) !important;
+    box-shadow: 0 1px 0 #7a0000, 0 2px 6px rgba(200,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+    animation: none;
+  }
+
+  @keyframes redGlow {
+    0%, 100% { box-shadow: 0 6px 0 #7a0000, 0 8px 16px rgba(200,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3); }
+    50% { box-shadow: 0 6px 0 #7a0000, 0 8px 28px rgba(200,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.3); }
+  }
+
+  .btn-hint {
+    font-size: 0.55rem;
+    color: #444;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* USES COUNTER - LED style */
+  .led-counter {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: #000;
+    border: 1px solid #222;
+    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.6rem;
+    color: #ff4400;
+    letter-spacing: 0.1em;
+    font-family: 'Share Tech Mono', monospace;
+    text-shadow: 0 0 6px #ff4400;
+  }
+
+  /* LABEL PLATE */
+  .label-plate {
+    background: #0a0a0a;
+    padding: 1.2rem 2rem;
+    text-align: center;
+    border-bottom: 3px solid #1a1a1a;
+    position: relative;
+  }
+
+  .machine-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: clamp(1.8rem, 7vw, 2.8rem);
+    color: white;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-shadow: none;
+  }
+
+  /* SCREEN AREA */
+  .screen-area {
+    padding: 1.4rem 1.6rem;
+    background: #0d0d0d;
+  }
+
+  /* MODE TABS */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 1.2rem;
+    background: #000;
+    border-radius: 3px;
+    padding: 3px;
+    border: 1px solid #222;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 0.4rem;
+    border: none;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    background: transparent;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: #1a1a1a;
+    color: #ff4400;
+    text-shadow: 0 0 8px #ff4400;
+  }
+
+  /* SCREEN */
+  .screen {
+    background: #050e05;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    min-height: 3.5rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #33ff33;
+    text-shadow: 0 0 8px rgba(51,255,51,0.5);
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 10px rgba(51,255,51,0.05);
+  }
+
+  .screen::before {
+    content: '> ';
+    opacity: 0.5;
+  }
+
+  .screen.struck {
+    color: #1a6b1a;
+    text-shadow: none;
+    text-decoration: line-through;
+  }
+
+  .screen-label {
+    font-size: 0.55rem;
+    color: #2a5a2a;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.4rem;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .arrow {
+    text-align: center;
+    color: #ff4400;
+    text-shadow: 0 0 8px #ff4400;
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .arrow.visible { opacity: 1; }
+
+  .screen-result {
+    background: #050e05;
+    border: 1px solid #33ff33;
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #33ff33;
+    text-shadow: 0 0 10px rgba(51,255,51,0.7);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 15px rgba(51,255,51,0.1);
+    display: none;
+    animation: screenOn 0.3s ease both;
+  }
+
+  .screen-result::before {
+    content: '>> ';
+    opacity: 0.7;
+  }
+
+  .screen-result.visible { display: block; }
+
+  /* SPECIAL MOMENT */
+  .special-screen {
+    background: #0e0a00;
+    border: 1px solid #ffd166;
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #ffd166;
+    text-shadow: 0 0 10px rgba(255,209,102,0.7);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 15px rgba(255,209,102,0.08);
+    display: none;
+    text-align: center;
+    animation: screenOn 0.4s ease both;
+  }
+
+  .special-screen::before { content: ''; }
+  .special-screen.visible { display: block; }
+
+  @keyframes screenOn {
+    from { opacity: 0; transform: scaleY(0.8); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* CUSTOM INPUT */
+  .custom-input {
+    width: 100%;
+    background: #050e05;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    color: #33ff33;
+    text-shadow: 0 0 6px rgba(51,255,51,0.4);
+    resize: none;
+    outline: none;
+    caret-color: #33ff33;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+
+  .custom-input:focus { border-color: #33ff33; }
+  .custom-input::placeholder { color: #1a4a1a; text-shadow: none; }
+
+  /* RESET */
+  .reset-wrap {
+    text-align: center;
+    margin-top: 0.8rem;
+    display: none;
+  }
+  .reset-wrap.visible { display: block; }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid #2a2a2a;
+    border-radius: 2px;
+    padding: 0.3rem 0.9rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: #333;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: #444; color: #666; }
+
+  /* FLASH */
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+    transition: opacity 0.06s;
+  }
+  .flash.on { opacity: 0.5; }
+
+  /* SCANLINES */
+  .screen-area::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  .shake { animation: shake 0.3s ease; }
+
+  /* BOTTOM SCREWS */
+  .screws {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: #080808;
+  }
+
+  .screw {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #333, #111);
+    border: 1px solid #222;
+    position: relative;
+  }
+
+  .screw::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 6px;
+    height: 1px;
+    background: #0a0a0a;
+    box-shadow: 0 2px 0 #0a0a0a;
+  }
+
+  .r-hidden { display: none; }
+  .r-visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="flash" id="flash"></div>
+
+<div class="machine-box">
+
+  <!-- SCREWS TOP -->
+  <div class="screws">
+    <div class="screw"></div>
+    <div class="screw"></div>
+    <div class="screw"></div>
+    <div class="screw"></div>
+  </div>
+
+  <!-- LABEL -->
+  <div class="label-plate">
+    <div class="machine-title">ONE MINUTE TIME MACHINE</div>
+  </div>
+
+  <!-- SCREEN -->
+  <div class="screen-area" style="position:relative">
+
+    <div class="tabs">
+      <button class="tab active" onclick="setMode('classic')" id="tab-classic">классика</button>
+      <button class="tab" onclick="setMode('custom')" id="tab-custom">своя фраза</button>
+    </div>
+
+    <!-- CLASSIC -->
+    <div id="classic-mode">
+      <div class="screen-label">input / было сказано</div>
+      <div class="screen" id="original-box">хуйня какая-то</div>
+      <div class="arrow" id="arrow">▼ rewriting... ▼</div>
+      <div class="r-hidden" id="result-wrap">
+        <div class="screen-label">output / что имелось в виду</div>
+        <div class="screen-result visible" id="result-box"></div>
+      </div>
+      <div class="special-screen" id="special-screen">
+        ✦ мне с тобой было хорошо ✦
+      </div>
+    </div>
+
+    <!-- CUSTOM -->
+    <div id="custom-mode" style="display:none">
+      <div class="screen-label">input / твоя фраза</div>
+      <textarea class="custom-input" id="custom-input" rows="2" placeholder="введи фразу..."></textarea>
+      <div class="arrow" id="custom-arrow">▼ rewriting... ▼</div>
+      <div class="r-hidden" id="custom-result-wrap">
+        <div class="screen-label">output / что за этим стояло</div>
+        <div class="screen-result visible" id="custom-result-box"></div>
+      </div>
+    </div>
+
+    <div class="reset-wrap" id="reset-wrap">
+      <button class="reset-btn" onclick="resetGame()">[ reset ]</button>
+    </div>
+
+  </div>
+
+  <!-- BUTTONS PANEL -->
+  <div class="top-panel">
+    <div class="led-counter" id="led">RESETS: 0</div>
+    <button class="side-btn" onclick="sidePress()"></button>
+    <button class="side-btn" onclick="sidePress()"></button>
+    <div class="red-btn-wrap">
+      <button class="red-btn" id="red-btn" onclick="pressButton()"></button>
+      <div class="btn-hint">press</div>
+    </div>
+    <button class="side-btn" onclick="sidePress()"></button>
+    <button class="side-btn" onclick="sidePress()"></button>
+  </div>
+
+  <!-- SCREWS BOTTOM -->
+  <div class="screws">
+    <div class="screw"></div>
+    <div class="screw"></div>
+    <div class="screw"></div>
+    <div class="screw"></div>
+  </div>
+
+</div>
+
+<script>
+  const phrases = [
+    { original: "хуйня какая-то", result: "мне сложно это объяснить, но ты мне важна" },
+    { original: "если быстро нравится — значит нарцисс или абьюзер", result: "меня пугает когда у меня возникает быстрая симпатия" },
+    { original: "недотрах", result: "ты мне понравился, но я постаралась об этом не думать" },
+    { original: "либо желание секса, либо сильная симпатия, а второе всегда плохо...", result: "я просто хотела чтобы ты меня понял" },
+    { special: true }
+  ];
+
+  const customReframes = [
+    "я старалась и это было честно",
+    "я защищалась — и это нормально",
+    "за этим словом было кое-что настоящее",
+    "я сделала что могла в тот момент",
+    "мне было важно это сказать",
+    "я просто не нашла нужных слов"
+  ];
+
+  let idx = 0;
+  let uses = 0;
+  let mode = 'classic';
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('tab-classic').classList.toggle('active', m === 'classic');
+    document.getElementById('tab-custom').classList.toggle('active', m === 'custom');
+    document.getElementById('classic-mode').style.display = m === 'classic' ? 'block' : 'none';
+    document.getElementById('custom-mode').style.display = m === 'custom' ? 'block' : 'none';
+    resetGame();
+  }
+
+  function pressButton() {
+    if (mode === 'classic') pressClassic();
+    else pressCustom();
+  }
+
+  function pressClassic() {
+    animBtn();
+    doFlash();
+    uses++;
+    document.getElementById('led').textContent = 'RESETS: ' + uses;
+
+    const p = phrases[Math.min(idx, phrases.length - 1)];
+
+    if (p.special) {
+      document.getElementById('original-box').style.display = 'none';
+      document.getElementById('arrow').classList.remove('visible');
+      document.getElementById('result-wrap').className = 'r-hidden';
+      document.getElementById('special-screen').classList.add('visible');
+    } else {
+      document.getElementById('original-box').style.display = '';
+      document.getElementById('original-box').textContent = p.original;
+      document.getElementById('original-box').classList.add('struck');
+      document.getElementById('arrow').classList.add('visible');
+      document.getElementById('result-box').textContent = p.result;
+      document.getElementById('result-wrap').className = 'r-visible';
+      document.getElementById('special-screen').classList.remove('visible');
+    }
+
+    document.getElementById('reset-wrap').classList.add('visible');
+    idx++;
+    if (idx >= phrases.length) idx = 0;
+  }
+
+  function pressCustom() {
+    const val = document.getElementById('custom-input').value.trim();
+    if (!val) {
+      document.getElementById('custom-input').classList.add('shake');
+      setTimeout(() => document.getElementById('custom-input').classList.remove('shake'), 350);
+      return;
+    }
+    animBtn();
+    doFlash();
+    uses++;
+    document.getElementById('led').textContent = 'RESETS: ' + uses;
+
+    const r = customReframes[Math.floor(Math.random() * customReframes.length)];
+    document.getElementById('custom-result-box').textContent = r;
+    document.getElementById('custom-result-wrap').className = 'r-visible';
+    document.getElementById('custom-arrow').classList.add('visible');
+    document.getElementById('reset-wrap').classList.add('visible');
+  }
+
+  function sidePress() {
+    doFlash();
+  }
+
+  function animBtn() {
+    const btn = document.getElementById('red-btn');
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 180);
+  }
+
+  function doFlash() {
+    const f = document.getElementById('flash');
+    f.classList.add('on');
+    setTimeout(() => f.classList.remove('on'), 100);
+  }
+
+  function resetGame() {
+    idx = 0;
+    document.getElementById('original-box').textContent = phrases[0].original;
+    document.getElementById('original-box').classList.remove('struck');
+    document.getElementById('original-box').style.display = '';
+    document.getElementById('arrow').classList.remove('visible');
+    document.getElementById('result-wrap').className = 'r-hidden';
+    document.getElementById('special-screen').classList.remove('visible');
+    document.getElementById('custom-arrow').classList.remove('visible');
+    document.getElementById('custom-result-wrap').className = 'r-hidden';
+    document.getElementById('custom-input').value = '';
+    document.getElementById('reset-wrap').classList.remove('visible');
+  }
+</script>
+</body>
+</html>
